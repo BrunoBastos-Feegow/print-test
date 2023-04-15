@@ -1,0 +1,178 @@
+.header, .footer {
+    width: 100%;
+    position: fixed;
+    z-index: 9999;
+}
+
+.header {
+    top: 0;
+}
+
+.footer {
+    bottom: 0;
+}
+
+.page-content {
+    position: relative;
+    z-index: 1;
+    margin-top: 2cm;
+    margin-bottom: 2cm;
+}
+
+body {
+    font-size: 13px;
+    background-color: #fff;
+}
+
+.field-label-memo, .field-label-text {
+    font-weight: 600;
+    font-size: 17px;
+    border-bottom: 1px solid #ececec;
+}
+
+.field-memo {
+    font-size: 15px;
+    margin-top: 15px;
+    border: dotted 2px #fff;
+    border-radius: 5px;
+    min-height: 100px;
+    padding: 7px;
+}
+
+label, .field-text {
+    font-size: 14px;
+}
+
+.field-text {
+    margin-bottom: 25px;
+    position: relative;
+    top: 3px;
+}
+
+.checkbox-img {
+    width: 25px;
+    margin: 5px;
+}
+
+.footer {
+    font-size: 12px;
+}
+
+/*page {*/
+/*    background: white;*/
+/*    display: block;*/
+/*    padding: 5px;*/
+/*    margin: 0.5cm auto;*/
+/*    box-shadow: 0 0 0.5cm rgba(0, 0, 0, 0.4);*/
+/*    border-radius: 24px;*/
+/*}*/
+
+page[size="A4"] {
+    width: 25cm;
+    height: 29.7cm;
+}
+
+page[size="A4"][layout="portrait"] {
+    width: 29.7cm;
+    height: 25cm;
+}
+
+.m10 {
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+.field-title {
+    font-weight: 600;
+}
+
+.field-title-small {
+    font-weight: 500;
+}
+
+.mb20 {
+    margin-bottom: 20px;
+}
+
+.field-img {
+    width: 100%;
+    max-width: 50%;
+}
+
+.div-field-img {
+    text-align: center;
+}
+
+table.report-container {
+    margin: 0 auto;
+}
+
+p {
+    margin: 0;
+}
+
+div.divHeader {
+    text-align: center;
+    margin: auto;
+    bottom: 0;
+    width: 100%;
+    font-size: 11px;
+
+}
+
+div.divFooter {
+    text-align: center;
+    margin: auto;
+    bottom: 0;
+    width: 100%;
+    font-size: 12px;
+}
+
+divFooter-signature {
+    text-align: center;
+    margin: auto;
+    bottom: 0;
+    width: 100%;
+    font-size: 12px;
+}
+
+.signature {
+    max-height: 100px;
+    max-width: 250px;
+    position: relative;
+    top: 15px;
+}
+
+.main {
+    padding: 25px;
+}
+
+.header-info > p > img {
+    width: 100%;
+}
+
+.conteudo-assinatura {
+    text-align: center;
+}
+
+.width100 {
+    width: 100%;
+}
+
+.page-content {
+    page-break-after: always;
+}
+
+.flex {
+    display: flex;
+    width: 100%;
+    justify-content: flex-start;
+}
+
+.imagens-laudo {
+    page-break-before: always;
+}
+
+.hidden {
+    display: none;
+}

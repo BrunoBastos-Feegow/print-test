@@ -4,7 +4,7 @@ const cors = require('cors');
 
 const app = express();
 app.use(cors());
-app.use(express.json({ limit: '50mb' })); // You can adjust the limit as needed
+app.use(express.json({limit: '50mb'})); // You can adjust the limit as needed
 
 function createStyleBlock(letterhead) {
     return `
@@ -65,11 +65,22 @@ async function getElementHeight(page, selector) {
     }, selector);
 }
 
+async function getElementWidth(page, selector) {
+    return await page.evaluate((selector) => {
+        const element = document.querySelector(selector);
+        const rect = element.getBoundingClientRect();
+        const style = window.getComputedStyle(element);
+        const marginLeft = parseFloat(style.marginLeft) || 0;
+        const marginRight = parseFloat(style.marginRight) || 0;
+        return rect.width + marginLeft + marginRight;
+    }, selector);
+}
+
 app.post('/generate-pdf', async (req, res) => {
     // const html = req.body.html;
-    const htmlHeader = req.body.htmlHeader;
-    const htmlFooter = req.body.htmlFooter;
-    const htmlBody = req.body.htmlBody;
+    // const htmlHeader = req.body.htmlHeader;
+    // const htmlFooter = req.body.htmlFooter;
+    // const htmlBody = req.body.htmlBody;
     const fullHtml = req.body.fullHtml;
     const letterhead = req.body.letterhead;
     const styleBlock = letterhead ? createStyleBlock(letterhead) : '';
@@ -78,55 +89,78 @@ app.post('/generate-pdf', async (req, res) => {
         const browser = await puppeteer.launch({args: ['--no-sandbox']});
         const page = await browser.newPage();
 
-        await page.setContent(fullHtml, {waitUntil: 'networkidle0'});
-        // get the height in pixels of the elemendt with id #header-content so we can use it to set the margin-top avoiding the header to be cut off or overleaf
-        // const teste = await page.$eval('#header-content', el => 'offsetHeight: ' + el.offsetHeight + 'clientHeight: ' + el.clientHeight + 'scrollHeight: ' + el.scrollHeight + 'offsetTop: ' + el.offsetTop + 'clientTop: ' + el.clientTop + 'scrollTop: ' + el.scrollTop + 'offsetLeft: ' + el.offsetLeft + 'clientLeft: ' + el.clientLeft + 'scrollLeft: ' + el.scrollLeft + 'offsetWidth: ' + el.offsetWidth + 'clientWidth: ' + el.clientWidth + 'scrollWidth: ' + el.scrollWidth + 'offsetParent: ' + el.offsetParent + 'style: ' + el.style + 'style.height: ' + el.style.height + 'style.width: ' + el.style.width + 'style.top: ' + el.style.top + 'style.left: ' + el.style.left + 'style.bottom: ' + el.style.bottom + 'style.right: ' + el.style.right + 'style.padding: ' + el.style.padding + 'style.margin: ' + el.style.margin + 'style.border: ' + el.style.border + 'style.position: ' + el.style.position + 'style.overflow: ' + el.style.overflow + 'style.overflowX: ' + el.style.overflowX + 'style.overflowY: ' + el.style.overflowY + 'style.display: ' + el.style.display + 'style.visibility: ' + el.style.visibility + 'style.zIndex: ' + el.style.zIndex + 'style.transform: ' + el.style.transform + 'style.transformOrigin: ' + el.style.transformOrigin + 'style.transformStyle: ' + el.style.transformStyle + 'style.transformBox: ' + el.style.transformBox + 'style.transformOrigin: ' + el.style.transformOrigin);
-        // console.log("teste: ", teste)
 
-
-        const headerContent = await page.$eval('#header-content', el => el.outerHTML);
-        const headerHeightA = await page.$eval('#header-content', el => el.offsetHeight || 0);
-        const footerContent = await page.$eval('#footer-content', el => el.outerHTML);
-        const footerHeightA = await page.$eval('#footer-content', el => el.offsetHeight || 0);
-
-        const headerHeight = await getElementHeight(page, '#header-content');
-        const footerHeight = await getElementHeight(page, '#footer-content');
-
-        console.log("headerHeightA: ", headerHeightA, "footerHeightA: ", footerHeightA, "headerHeight: ", headerHeight, "footerHeight: ", footerHeight)
-
-        // console.log("headerHeight: ", headerHeight, "footerHeight: ", footerHeight)
-
-        // Remove the original header and footer content from the page
-        await page.evaluate(() => {
-            const header = document.querySelector('#header-content');
-            const footer = document.querySelector('#footer-content');
-            if (header) header.remove();
-            if (footer) footer.remove();
-        });
-
+        // importing css files
         await page.addStyleTag({path: 'css/pdf.css'});
-        // await page.addStyleTag({path: 'css/bootstrap.min.css'});
+        // see why bootstrap is messing up the pdf
+        await page.addStyleTag({path: 'css/bootstrap.min.css'});
         await page.addStyleTag({path: 'css/normalize.min.css'});
         await page.addStyleTag({path: 'css/patient-interface.css'});
         await page.addStyleTag({path: 'css/jquery.gridster-0-5-6.css'});
-
-        // console.log("styleBlock: ", styleBlock)
-
-        await page.addStyleTag({ content: styleBlock });
+        await page.addStyleTag({content: styleBlock});
         await page.addStyleTag({content: `@import url('https://fonts.googleapis.com/css?family=Open+Sans:400,700');`});
         await page.addStyleTag({content: `@import url('https://pro.fontawesome.com/releases/v5.15.4/css/all.css');`});
 
+        // try to adjust size of the page
+        await page.addStyleTag({content: `.report-container {max-width: 595.28pt;margin: auto;}`});
+        // await page.addStyleTag({content: `img {max-width: 100%;height: auto;}`});
+        await page.addStyleTag({content: `#header-content img {max-width: 100% !important;height: auto !important;}`});
+
+        await page.setContent(fullHtml, {waitUntil: 'networkidle0'});
+
+        // evaluate the page and add max-width and height to all the images
+        const img_test = await page.evaluate(() => {
+            const images = document.querySelectorAll('img');
+            images.forEach((img) => {
+                img.style.maxWidth = '100%';
+                img.style.height = 'auto';
+            });
+            return images[2].src;
+        });
+        console.log("img_test: ", img_test);
+
+
+        const {
+            headerContent,
+            footerContent,
+            headerHeight,
+            footerHeight,
+            headerWidth,
+            footerWidth
+        } = await page.evaluate(() => {
+            // Get header and footer content
+            const headerContent = document.querySelector('#header-content').outerHTML;
+            const footerContent = document.querySelector('#footer-content').outerHTML;
+
+            // Get header and footer dimensions
+            const headerElement = document.querySelector('#header-content');
+            const footerElement = document.querySelector('#footer-content');
+            const headerRect = headerElement.getBoundingClientRect();
+            const footerRect = footerElement.getBoundingClientRect();
+            const headerHeight = headerRect.height;
+            const footerHeight = footerRect.height;
+            const headerWidth = headerRect.width;
+            const footerWidth = footerRect.width;
+
+            document.querySelector('#header-content').remove();
+            document.querySelector('#footer-content').remove();
+
+            return {headerContent, footerContent, headerHeight, footerHeight, headerWidth, footerWidth};
+        });
+
+        console.log("headerHeight: ", headerHeight, "headerWidth: ", headerWidth, "footerHeight: ", footerHeight, "footerWidth: ", footerWidth)
         await page.addStyleTag({
             content: `@page {margin-top: ${(headerHeight) + 5}px; margin-bottom: ${(footerHeight) * 1.5}px; margin-left: 7mm; margin-right: 7mm;}`
         });
-
 
         const pdfOptions = {
             format: 'A4',
             printBackground: true,
             displayHeaderFooter: true,
-            headerTemplate:`<style>#header, #footer { padding: 0 !important; margin-left: 5mm; margin-right: 5mm; }</style><div class="header" style="width: 100%; border:1px solid;">${headerContent}</div>`,
-            footerTemplate:`</style><div class="footer" style="width: 100%; border:1px solid;">${footerContent}</div>`,
+            headerTemplate: `<style>#header, #footer { padding: 0 !important; margin-left: 5mm; margin-right: 5mm; }</style>
+                <div class="header" style="width: 100%;">${headerContent}</div>
+            `,
+            footerTemplate: `</style><div class="footer" style="width: 100%;">${footerContent}</div>`,
             // margin: { top: `${(headerHeight) * 1.5 + 10}px`, bottom: `${(footerHeight + letterhead.mBottom) * 1.5}px`, left: '7mm', right: '7mm' },
         };
 
@@ -137,7 +171,7 @@ app.post('/generate-pdf', async (req, res) => {
         res.send(pdfBuffer);
     } catch (error) {
         console.error('Error generating PDF:', error);
-        res.status(500).send({ message: 'Error generating PDF', error });
+        res.status(500).send({message: 'Error generating PDF', error});
     }
 
 

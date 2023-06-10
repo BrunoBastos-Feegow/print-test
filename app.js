@@ -155,7 +155,7 @@ app.post('/generate-pdf', async (req, res) => {
             let headerTmpHeight = headerElement.offsetHeight;
             if(headerTmpHeight === 0) {
                 const img = headerElement.querySelector('img');
-                headerTmpHeight = (img.offsetHeight || img.height) + 10;
+                headerTmpHeight = (img.offsetHeight || img.height) * 1.3;
             }
             const headerHeight = headerTmpHeight +
                 parseFloat(headerStyle.marginTop) +
@@ -166,7 +166,7 @@ app.post('/generate-pdf', async (req, res) => {
             let footerTmpHeight = footerElement.offsetHeight;
             if(footerTmpHeight === 0) {
                 const img = footerElement.querySelector('img');
-                footerTmpHeight = (img.offsetHeight || img.height) + 10;
+                footerTmpHeight = (img.offsetHeight || img.height) * 1.3;
             }
             const footerHeight = footerTmpHeight +
                 parseFloat(footerStyle.marginTop) +

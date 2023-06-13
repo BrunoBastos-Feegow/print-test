@@ -1,0 +1,10 @@
+version: '3.8'
+
+services:
+  puppeteer:
+    build: .
+    container_name: pdf-service
+    volumes:
+      - .:/app
+    ports:
+      - 3000:3000
